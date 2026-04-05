@@ -1,0 +1,5 @@
+{
+  "name": "Minecraft Stylizer",
+  "description": "An AI-powered web app that transforms any photo into a high-fidelity Minecraft-style image using the Gemini API.",
+  "requestFramePermissions": []
+}
