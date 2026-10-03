@@ -18,6 +18,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from "@google/genai";
 import { cn } from './lib/utils';
+import { MINECRAFT_TRANSFORM_PROMPT } from './lib/minecraftPrompt';
 
 const MODEL_NAME = "gemini-3.1-flash-image";
 
@@ -152,7 +153,7 @@ export default function App() {
         contents: {
           parts: [
             { inlineData: { data: base64Data, mimeType: mimeType } },
-            { text: "Transform this image into a high-fidelity Minecraft world. Use a 'realistic shaders' style: include volumetric lighting, high-quality water reflections, soft shadows, and vibrant colors. Every object in the scene should be translated into Minecraft blocks while maintaining the original composition, perspective, and subjects. The final result should look like a screenshot from a high-end Minecraft modpack." },
+            { text: MINECRAFT_TRANSFORM_PROMPT },
           ],
         },
         config: {
