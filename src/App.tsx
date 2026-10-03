@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from "@google/genai";
-import { cn } from './lib/utils';
 import { MINECRAFT_TRANSFORM_PROMPT } from './lib/minecraftPrompt';
 
 const MODEL_NAME = "gemini-3.1-flash-image";
@@ -42,6 +41,7 @@ function getClosestAspectRatio(width: number, height: number): string {
 }
 
 export default function App() {
+  const [preview, setPreview] = useState<'original' | 'result'>('original');
   const [image, setImage] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -100,6 +100,7 @@ export default function App() {
             setAspectRatio(getClosestAspectRatio(img.width, img.height));
           }
           
+          setPreview('original');
           setResult(null);
           setError(null);
         };
@@ -112,8 +113,9 @@ export default function App() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'image/*': [] },
-    multiple: false
-  } as any);
+    multiple: false,
+    disabled: loading
+  });
 
   const handleOpenKey = () => {
     setApiKeyValue(apiKey || "");
@@ -139,6 +141,7 @@ export default function App() {
   const transformImage = async () => {
     if (!image) return;
     
+    setPreview('result');
     setLoading(true);
     setError(null);
 
@@ -208,248 +211,106 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen font-sans flex flex-col">
-      {/* Navbar */}
-      <nav className="bg-mc-dark text-white border-b-4 border-mc-border px-4 py-3 lg:px-8 flex justify-between items-center relative z-20">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="bg-mc-green border-2 border-mc-dark p-1.5 shadow-[2px_2px_0px_#111] transform -rotate-3 shrink-0">
-            <ImageIcon className="w-5 h-5 text-mc-dark" />
-          </div>
-          <div className="flex flex-col justify-center mt-0.5">
-            <span className="font-black text-lg md:text-xl lg:text-2xl tracking-tighter leading-none truncate">
-              IMAGE<span className="text-mc-green">2</span>MINECRAFT
-            </span>
-            <span className="text-[9px] md:text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase leading-none mt-1 hidden sm:block">
-              AI Vision Stylizer
-            </span>
-          </div>
-        </div>
-        <div className="shrink-0 ml-2 md:ml-4">
-          <button 
-            onClick={handleOpenKey} 
-            className={cn(
-              "flex items-center gap-2 text-xs md:text-sm font-black border-2 border-mc-border shadow-[2px_2px_0px_#111] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#111] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none px-2 py-1.5 md:px-4 transition-all",
-              hasKey ? "bg-mc-green text-mc-dark" : "bg-white text-mc-dark"
-            )}
-          >
-            {hasKey ? (
-              <div className="w-2 h-2 bg-mc-dark rounded-full animate-pulse shrink-0" />
-            ) : (
-              <Key className="w-3 h-3 md:w-4 md:h-4 shrink-0" />
-            )}
-            <span>{hasKey ? "API READY" : "SET API KEY"}</span>
-          </button>
-        </div>
+    <div className="app-shell">
+      <nav className="app-nav" aria-label="应用导航">
+        <a href="/" className="brand" aria-label="Image2Minecraft 首页">
+          <span className="brand-icon"><ImageIcon size={20} /></span>
+          <span>IMAGE<span className="text-mc-green">2</span>MINECRAFT</span>
+        </a>
+        <button onClick={handleOpenKey} className="key-button">
+          <Key size={16} /> {hasKey ? '密钥设置' : '设置密钥'}
+        </button>
       </nav>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 flex flex-col gap-8 lg:gap-12">
-        
-        {/* Hero */}
-        <header className="text-center py-6 lg:py-12 px-2 relative">
-          {/* Decorative blocks */}
-          <div className="absolute top-4 left-4 lg:top-8 lg:left-12 w-8 h-8 bg-mc-green border-4 border-mc-dark hidden md:block transform -rotate-6"></div>
-          <div className="absolute bottom-4 right-4 lg:bottom-8 lg:right-12 w-6 h-6 bg-gray-300 border-4 border-mc-dark hidden md:block transform rotate-12"></div>
-          
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-mc-dark mb-5 lg:mb-8 leading-[1.2] md:leading-[1.1] max-w-4xl mx-auto text-balance px-2">
-            Turn Photos Into <span className="text-white bg-mc-green border-[3px] md:border-4 border-mc-dark px-2 py-0.5 sm:px-3 sm:py-1 inline-block transform -rotate-2 shadow-[3px_3px_0px_#111] md:shadow-[4px_4px_0px_#111] mt-1 md:mt-0 ml-1 md:ml-2">Blocks</span>
-          </h1>
-          <p className="text-sm md:text-base lg:text-xl text-gray-600 max-w-2xl mx-auto font-semibold px-4">
-            Upload any image and our Gemini-powered engine will reconstruct it using high-fidelity Minecraft shaders and blocks.
-          </p>
+      <main className="mobile-workspace">
+        <header className="workspace-intro">
+          <span className="eyebrow">照片 → 方块世界</span>
+          <h1>让现实，变成我的世界。</h1>
+          <p>保留原图的天气与构图，换一种世界的质感。</p>
         </header>
 
-        {/* Workspace Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          
-          {/* Left: Upload Card */}
-          <div className="mc-card p-5 lg:p-8 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black uppercase flex items-center gap-3">
-                <span className="bg-mc-green text-white border-4 border-mc-dark w-10 h-10 flex items-center justify-center shadow-[4px_4px_0px_#111]">1</span>
-                Upload Photo
-              </h2>
-              {image && (
-                <span className="text-sm font-bold bg-gray-200 text-gray-800 px-3 py-1 border-4 border-mc-dark shadow-[2px_2px_0px_#111]">
-                  RATIO: {aspectRatio}
-                </span>
-              )}
+        <div className="workspace-layout">
+          <section className="settings-card" aria-label="照片与转换设置">
+            <div className="section-heading"><h2>你的照片</h2>{image && <span className="ratio-badge">{aspectRatio}</span>}</div>
+            <div {...getRootProps()} className={`upload-zone ${image ? 'has-image' : ''} ${isDragActive ? 'is-dragging' : ''} ${loading ? 'is-disabled' : ''}`}>
+              <input {...getInputProps()} aria-label="选择要转换的照片" />
+              {image ? <img src={image} alt="已选择的原图缩略图" className="upload-thumbnail" /> : <span className="upload-icon"><Upload size={24} /></span>}
+              <div><strong>{image ? '更换照片' : '选择一张照片'}</strong><p>{loading ? '生成期间暂不可更换' : '点击从相册选择，也支持拖放'}</p></div>
+              {image && <RefreshCw size={18} className="shrink-0" />}
             </div>
 
-            <div 
-              {...getRootProps()} 
-              className={cn(
-                "mc-inset flex-1 cursor-pointer flex flex-col items-center justify-center p-8 min-h-[350px] transition-colors",
-                isDragActive ? "bg-[#e8f5e9] border-mc-green" : "pixel-pattern"
-              )}
-            >
-              <input {...getInputProps({
-                style: {
-                  display: 'block',
-                  position: 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  zIndex: 50,
-                  cursor: 'pointer'
-                }
-              })} />
+            <p className="settings-note">天气、光照与构图始终以原图为准</p>
+          </section>
 
-              {image ? (
-                <>
-                  <img 
-                    src={image} 
-                    alt="Original" 
-                    className="absolute inset-0 w-full h-full object-contain p-4 opacity-90 group-hover:opacity-40 transition-opacity"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="relative z-10 flex flex-col items-center gap-2 bg-mc-dark text-white border-4 border-mc-border px-6 py-4 shadow-[4px_4px_0px_rgba(0,0,0,0.3)] opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                    <RefreshCw className="w-6 h-6" />
-                    <span className="font-black text-sm uppercase tracking-widest">Tap to Replace</span>
-                  </div>
-                </>
+          <section className="preview-card" aria-label="图片预览">
+            <div className="preview-toolbar">
+              <h2>预览</h2>
+              <div className="preview-options" role="group" aria-label="选择预览图片">
+                <button aria-pressed={preview === 'original'} onClick={() => setPreview('original')}>原图</button>
+                <button aria-pressed={preview === 'result'} onClick={() => setPreview('result')}>结果</button>
+              </div>
+            </div>
+            <div className={`preview-stage ${image ? 'with-photo' : ''}`} aria-busy={loading && preview === 'result'}>
+              {preview === 'result' && loading ? (
+                <div className="preview-empty" role="status"><RefreshCw size={32} className="loading-spinner" /><strong>正在搭建你的方块世界</strong><p>完成后会在这里显示，请稍候</p></div>
+              ) : (preview === 'original' ? image : result) ? (
+                <img src={(preview === 'original' ? image : result)!} alt={preview === 'original' ? '原始照片' : 'Minecraft 转换结果'} className="preview-image" />
               ) : (
-                <div className="flex flex-col items-center gap-4 text-gray-500 relative z-10 w-full max-w-[220px]">
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-white border-4 border-mc-dark flex items-center justify-center shadow-[4px_4px_0px_#111] transform transition-transform group-hover:scale-110">
-                    <Upload className="w-8 h-8 md:w-10 md:h-10 text-mc-green" />
-                  </div>
-                  <div className="text-center bg-white border-4 border-mc-border px-4 py-3 shadow-[4px_4px_0px_#111] w-full">
-                    <p className="font-black text-mc-dark text-lg md:text-xl uppercase">Upload</p>
-                    <p className="text-xs md:text-sm font-bold text-gray-500 mt-1">Tap or Drag</p>
-                  </div>
-                </div>
+                <div className="preview-empty"><ImageIcon size={32} /><strong>{preview === 'original' ? '世界，从一张照片开始' : '你的方块世界将在这里出现'}</strong><p>{preview === 'original' ? '选择照片后，可在这里查看完整原图' : '点击下方按钮开始转换'}</p></div>
               )}
             </div>
-          </div>
-
-          {/* Right: Result Card */}
-          <div className="mc-card p-5 lg:p-8 flex flex-col">
-            <h2 className="text-2xl font-black uppercase flex items-center gap-3 mb-6">
-              <span className="bg-mc-green text-white border-4 border-mc-dark w-10 h-10 flex items-center justify-center shadow-[4px_4px_0px_#111]">2</span>
-              Crafted Result
-            </h2>
-
-            <div className="mc-inset-dark flex-1 flex flex-col items-center justify-center min-h-[350px]">
-              <AnimatePresence mode="wait">
-                {loading ? (
-                  <motion.div 
-                    key="loading"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="flex flex-col items-center gap-6 z-10"
-                  >
-                    <div className="w-16 h-16 border-8 border-[#333] border-t-mc-green animate-spin rounded-full" />
-                    <span className="font-black text-white tracking-widest uppercase text-xl">Crafting...</span>
-                  </motion.div>
-                ) : result ? (
-                  <motion.div 
-                    key="result"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="absolute inset-0 w-full h-full"
-                  >
-                    <img 
-                      src={result} 
-                      alt="Minecraft Stylized" 
-                      className="w-full h-full object-contain p-4"
-                      referrerPolicy="no-referrer"
-                    />
-                  </motion.div>
-                ) : (
-                  <div className="flex flex-col items-center gap-4 text-gray-500 z-10 w-full max-w-[220px]">
-                    <div className="w-16 h-16 md:w-20 md:h-20 bg-[#222] border-4 border-[#333] flex items-center justify-center shadow-[inset_4px_4px_0px_rgba(0,0,0,0.5)]">
-                      <ImageIcon className="w-8 h-8 md:w-10 md:h-10 text-[#444]" />
-                    </div>
-                    <div className="text-center bg-[#222] border-4 border-[#333] px-4 py-3 shadow-[inset_4px_4px_0px_rgba(0,0,0,0.5)] w-full">
-                      <p className="font-black text-[#666] text-lg md:text-xl uppercase">Result</p>
-                      <p className="text-xs md:text-sm font-bold text-[#555] mt-1">Awaiting Image</p>
-                    </div>
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
+            {result && preview === 'result' && <p className="preview-caption">可长按图片查看或保存，也可使用下方保存按钮</p>}
+          </section>
         </div>
-
-        {/* Action Bar */}
-        <div className="flex flex-col items-center gap-4 mt-4 mb-16">
-          {!hasKey && (
-            <div className="text-red-600 font-bold text-sm flex items-center gap-2 bg-red-100 px-4 py-2 border-4 border-red-600 shadow-[4px_4px_0px_#dc2626]">
-              <AlertCircle className="w-5 h-5" />
-              API Key required to craft images
-            </div>
-          )}
-          {error && (
-            <div className="text-red-600 font-bold text-sm flex items-center gap-2 bg-red-100 px-4 py-2 border-4 border-red-600 shadow-[4px_4px_0px_#dc2626] max-w-2xl text-center">
-              <AlertCircle className="w-5 h-5 shrink-0" />
-              {error}
-            </div>
-          )}
-          
-          <button
-            disabled={!image || loading || !hasKey}
-            onClick={transformImage}
-            className="mc-button w-full max-w-lg py-5 text-2xl lg:text-3xl"
-          >
-            {loading ? (
-              <>
-                <RefreshCw className="w-8 h-8 animate-spin" />
-                CRAFTING...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-8 h-8" />
-                CRAFT IMAGE
-              </>
-            )}
-          </button>
-
-          {result && !loading && (
-            <button 
-              onClick={downloadResult}
-              className="bg-white text-mc-dark border-4 border-mc-border shadow-[4px_4px_0px_#111] font-black uppercase tracking-widest hover:bg-gray-50 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[0px_0px_0px_#111] transition-all flex items-center justify-center gap-3 mt-4 px-8 py-4 w-full max-w-lg text-xl"
-            >
-              <Download className="w-6 h-6" /> Download Result
-            </button>
-          )}
-        </div>
-
+        {error && <div role="alert" className="error-message"><AlertCircle size={20} /><span>{error}</span></div>}
       </main>
+
+      <footer className="action-dock">
+        <div className="action-dock-inner">
+          <p className="action-hint" aria-live="polite">{loading ? '正在生成，请保持页面打开' : !hasKey ? '先设置 Gemini API 密钥，再开始转换' : !image ? '选择照片后即可开始' : result ? '结果已生成，可保存或重新生成' : '照片已就绪，开始转换吧'}</p>
+          <div className="action-buttons">
+            <button disabled={!image || loading || !hasKey} onClick={transformImage} className="generate-button">
+              {loading ? <RefreshCw size={20} className="loading-spinner" /> : <Sparkles size={20} />}
+              {loading ? '正在生成…' : result ? '重新生成' : '生成方块世界'}
+            </button>
+            {result && !loading && <button onClick={downloadResult} className="save-button"><Download size={20} />保存图片</button>}
+          </div>
+        </div>
+      </footer>
 
       {/* API Key Modal */}
       <AnimatePresence>
         {showKeyModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
             <motion.div 
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="bg-white border-4 border-mc-dark shadow-[8px_8px_0px_#111] p-6 lg:p-8 max-w-md w-full relative"
+              className="bg-white border-4 border-mc-dark shadow-[8px_8px_0px_#111] p-5 pt-14 lg:p-8 max-w-md w-full relative max-h-[90dvh] overflow-y-auto"
             >
               <button 
                 onClick={() => setShowKeyModal(false)}
-                className="absolute top-4 right-4 text-gray-500 hover:text-mc-dark transition-colors"
+                aria-label="关闭密钥设置" className="absolute top-2 right-2 min-w-11 min-h-11 flex items-center justify-center text-gray-500 hover:text-mc-dark transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
               
               <h3 className="text-2xl font-black uppercase mb-2 flex items-center gap-2">
                 <Key className="w-6 h-6 text-mc-green" />
-                Gemini API Key
+                Gemini API 密钥
               </h3>
               <p className="text-sm text-gray-600 font-semibold mb-6">
-                Enter your Gemini API key to craft images. Your key is stored locally in your browser and never sent to our servers.
+                密钥保存在当前浏览器，仅用于向 Gemini 发起生成请求。
               </p>
 
               <input 
+                aria-label="Gemini API 密钥"
+                autoComplete="off"
                 type="password" 
                 value={apiKeyValue}
                 onChange={(e) => setApiKeyValue(e.target.value)}
                 placeholder="AIzaSy..."
-                className="w-full bg-gray-100 border-4 border-mc-dark p-3 font-mono text-sm mb-6 focus:outline-none focus:border-mc-green focus:bg-white transition-colors"
+                className="w-full bg-gray-100 border-4 border-mc-dark p-3 font-mono text-base mb-6 focus:outline-none focus:border-mc-green focus:bg-white transition-colors"
               />
 
               <div className="flex gap-3">
@@ -457,14 +318,14 @@ export default function App() {
                   onClick={saveApiKey}
                   className="flex-1 bg-mc-green text-white border-4 border-mc-dark shadow-[4px_4px_0px_#111] font-black uppercase py-3 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
                 >
-                  Save Key
+                  保存密钥
                 </button>
                 {apiKey && (
                   <button 
                     onClick={clearApiKey}
                     className="bg-red-500 text-white border-4 border-mc-dark shadow-[4px_4px_0px_#111] font-black uppercase px-4 py-3 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_#111] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
                   >
-                    Clear
+                    清除
                   </button>
                 )}
               </div>
