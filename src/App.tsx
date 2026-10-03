@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI } from "@google/genai";
 import { cn } from './lib/utils';
 
-const MODEL_NAME = "gemini-3.1-flash-image-preview";
+const MODEL_NAME = "gemini-3.1-flash-image";
 
 const SUPPORTED_RATIOS = [
   { str: "1:8", val: 1/8 },
